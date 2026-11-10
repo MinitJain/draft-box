@@ -6,8 +6,11 @@ const latest = atom({ plugin: 'just-draft', key: 'latest' } as const, null)
 // Splits a reply around its last closed ```draft fence; null if there is none.
 function splitDraft(text: string) {
   for (let open = text.lastIndexOf('```draft\n'); open >= 0; open = text.lastIndexOf('```draft\n', open - 1)) {
-    const close = text.indexOf('\n```', open + 9)
-    if (close >= 0) return { before: text.slice(0, open), draft: text.slice(open + 9, close), after: text.slice(close + 4) }
+    // a closing fence is ``` with only whitespace after it on its line, never another ```draft opener
+    const fence = /\n```[ \t]*(?=\n|$)/g
+    fence.lastIndex = open + 8
+    const m = fence.exec(text)
+    if (m) return { before: text.slice(0, open), draft: text.slice(open + 9, m.index), after: text.slice(m.index + m[0].length) }
     if (open === 0) break
   }
   return null
