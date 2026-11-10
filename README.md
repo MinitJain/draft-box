@@ -2,6 +2,8 @@
 
 Edit what Claude writes for you without leaving Claude Code.
 
+![draft-box: a draft appears in a box, /draft puts it in the prompt box, and it gets edited](assets/demo.gif)
+
 When you ask Claude Code for an email, message, post or cover letter, the text usually sits in the reply where you can't edit it. If you copy it and paste it back into the prompt, it turns into `[Pasted text #1]`.
 
 draft-box fixes that:
