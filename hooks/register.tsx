@@ -1,15 +1,19 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-const latest = atom({ plugin: 'draft-box', key: 'latest' } as const, null)
+const latest = atom({ plugin: 'just-draft', key: 'latest' } as const, null)
 
-// shortcut: stub parser; replaced by the user's splitDraft
+// Splits a reply around its last closed ```draft fence; null if there is none.
 function splitDraft(text: string) {
-  const open = text.indexOf('```draft\n')
-  if (open < 0) return null
-  const close = text.indexOf('\n```', open + 9)
-  if (close < 0) return null
-  return { before: text.slice(0, open), draft: text.slice(open + 9, close), after: text.slice(close + 4) }
+  for (let open = text.lastIndexOf('```draft\n'); open >= 0; open = text.lastIndexOf('```draft\n', open - 1)) {
+    // a closing fence is ``` with only whitespace after it on its line, never another ```draft opener
+    const fence = /\n```[ \t]*(?=\n|$)/g
+    fence.lastIndex = open + 8
+    const m = fence.exec(text)
+    if (m) return { before: text.slice(0, open), draft: text.slice(open + 9, m.index), after: text.slice(m.index + m[0].length) }
+    if (open === 0) break
+  }
+  return null
 }
 
 const RULE = `# Drafts
@@ -25,7 +29,7 @@ export const register: Register = on => {
   // Tell Claude to fence drafts, so the mod can find them.
   on('prompt.compose', async ($, e, next) => {
     const r = await next(e)
-    return { sections: [...r.sections, { id: 'draft-box:rule', text: RULE, scope: 'session' as const }] }
+    return { sections: [...r.sections, { id: 'just-draft:rule', text: RULE, scope: 'session' as const }] }
   })
 
   on('session.start', async ($, e, next) => {
