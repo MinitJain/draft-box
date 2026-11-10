@@ -39,7 +39,11 @@ test('/draft takes the last of two drafts, and an unclosed fence is no draft', a
   await ($ as any).command.run({ command: 'draft', args: '' })
   expect(filled).toBe('second')
 
+  await $.classic.Stop({ last_assistant_message: '```draft\nclosed\n```\nthen\n```draft\nnever closed' } as any)
+  await ($ as any).command.run({ command: 'draft', args: '' })
+  expect(filled).toBe('closed')
+
   await $.classic.Stop({ last_assistant_message: '```draft\nnever closed' } as any)
   await ($ as any).command.run({ command: 'draft', args: '' })
-  expect(filled).toBe('second')
+  expect(filled).toBe('closed')
 })

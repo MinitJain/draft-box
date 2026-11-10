@@ -3,13 +3,14 @@ import type { Register } from 'claude-code'
 
 const latest = atom({ plugin: 'draft-box', key: 'latest' } as const, null)
 
-// Splits a reply around its last ```draft fence; null if none or it never closes.
+// Splits a reply around its last closed ```draft fence; null if there is none.
 function splitDraft(text: string) {
-  const open = text.lastIndexOf('```draft\n')
-  if (open < 0) return null
-  const close = text.indexOf('\n```', open + 9)
-  if (close < 0) return null
-  return { before: text.slice(0, open), draft: text.slice(open + 9, close), after: text.slice(close + 4) }
+  for (let open = text.lastIndexOf('```draft\n'); open >= 0; open = text.lastIndexOf('```draft\n', open - 1)) {
+    const close = text.indexOf('\n```', open + 9)
+    if (close >= 0) return { before: text.slice(0, open), draft: text.slice(open + 9, close), after: text.slice(close + 4) }
+    if (open === 0) break
+  }
+  return null
 }
 
 const RULE = `# Drafts
