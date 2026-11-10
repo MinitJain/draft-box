@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-const latest = atom({ plugin: 'draft-box', key: 'latest' } as const, null)
+const latest = atom({ plugin: 'just-draft', key: 'latest' } as const, null)
 
 // Splits a reply around its last closed ```draft fence; null if there is none.
 function splitDraft(text: string) {
@@ -26,7 +26,7 @@ export const register: Register = on => {
   // Tell Claude to fence drafts, so the mod can find them.
   on('prompt.compose', async ($, e, next) => {
     const r = await next(e)
-    return { sections: [...r.sections, { id: 'draft-box:rule', text: RULE, scope: 'session' as const }] }
+    return { sections: [...r.sections, { id: 'just-draft:rule', text: RULE, scope: 'session' as const }] }
   })
 
   on('session.start', async ($, e, next) => {

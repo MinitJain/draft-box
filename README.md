@@ -1,12 +1,12 @@
-# draft-box
+# just-draft
 
 Edit what Claude writes for you without leaving Claude Code.
 
-![draft-box: a draft appears in a box, /draft puts it in the prompt box, and it gets edited](assets/demo.gif)
+![just-draft: a draft appears in a box, /draft puts it in the prompt box, and it gets edited](assets/demo.gif)
 
 When you ask Claude Code for an email, message, post or cover letter, the text usually sits in the reply where you can't edit it. If you copy it and paste it back into the prompt, it turns into `[Pasted text #1]`.
 
-draft-box fixes that:
+just-draft fixes that:
 
 1. Claude puts the text you'll send inside a `draft` block, and the mod shows it in a box.
 2. Type `/draft` and the latest draft fills your prompt box as plain, editable text, with no `[Pasted text]`.
@@ -17,7 +17,7 @@ draft-box fixes that:
 At the prompt of a Claude Code terminal session:
 
 ```
-/plugin install draft-box --marketplace MinitJain/draft-box
+/plugin install just-draft --marketplace MinitJain/just-draft
 ```
 
 Answer `y` to add the marketplace, then pick a scope.
@@ -25,10 +25,10 @@ Answer `y` to add the marketplace, then pick a scope.
 From a shell:
 
 ```
-claude plugin install draft-box --marketplace MinitJain/draft-box
+claude plugin install just-draft --marketplace MinitJain/just-draft
 ```
 
-In the desktop app: click + next to the prompt box, then Plugins, then Add marketplace with `MinitJain/draft-box`, then Add plugin.
+In the desktop app: click + next to the prompt box, then Plugins, then Add marketplace with `MinitJain/just-draft`, then Add plugin.
 
 ## Limits
 

@@ -1,5 +1,5 @@
 {
-  "name": "draft-box",
+  "name": "just-draft",
   "version": "0.0.1",
   "description": "Edit Claude's drafts (emails, messages) in your prompt box instead of copy-pasting them elsewhere",
   "author": { "name": "MinitJain" },

@@ -1,5 +1,5 @@
 {
-  "name": "draft-box",
+  "name": "just-draft",
   "owner": { "name": "MinitJain" },
-  "plugins": [{ "name": "draft-box", "source": "./" }]
+  "plugins": [{ "name": "just-draft", "source": "./" }]
 }
