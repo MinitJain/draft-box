@@ -1,0 +1,8 @@
+{
+  "name": "draft-box",
+  "version": "0.1.0",
+  "description": "Edit Claude's drafts (emails, messages) in your prompt box instead of copy-pasting them elsewhere",
+  "author": { "name": "MinitJain" },
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}
