@@ -3,9 +3,9 @@ import type { Register } from 'claude-code'
 
 const latest = atom({ plugin: 'draft-box', key: 'latest' } as const, null)
 
-// shortcut: stub parser; replaced by the user's splitDraft
+// Splits a reply around its last ```draft fence; null if none or it never closes.
 function splitDraft(text: string) {
-  const open = text.indexOf('```draft\n')
+  const open = text.lastIndexOf('```draft\n')
   if (open < 0) return null
   const close = text.indexOf('\n```', open + 9)
   if (close < 0) return null

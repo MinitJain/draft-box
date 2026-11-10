@@ -31,7 +31,11 @@ In the desktop app: click + next to the prompt box, then Plugins, then Add marke
 ## Limits
 
 - The box inside the reply is a preview. Claude Code doesn't let a mod's text box take clicks or keys there, so editing happens in the prompt box.
-- `/draft` takes the most recent draft only.
+- `/draft` takes the most recent draft only (the last one, if a reply has two).
+
+## Develop
+
+`tsconfig.json` extends `.claude-plugin/types/tsconfig.json`, which Claude Code writes when it loads the mod. Load it once (`claude --plugin-dir .`), then `tsc -p .` type-checks it. Run the tests with `claude plugin test .`.
 
 ## License
 
