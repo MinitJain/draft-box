@@ -75,3 +75,17 @@ test('/draft copy reports a refused copy', async ($, on) => {
   const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
   expect(r.text).toBe('Could not copy (refused).')
 })
+
+test('/draft copy with no draft, and an unknown argument, leave clipboard and prompt alone', async ($, on) => {
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let touched = false
+  on('ui.copy', () => { touched = true; return { value: { isCopied: true } } as any })
+  on('prompt.fill', () => { touched = true; return { isFilled: true } as any })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  const a: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(a.text).toBe('No draft yet.')
+  const b: any = await ($ as any).command.run({ command: 'draft', args: 'cpy' })
+  expect(b.text).toBe('Use /draft or /draft copy.')
+  expect(touched).toBe(false)
+})
