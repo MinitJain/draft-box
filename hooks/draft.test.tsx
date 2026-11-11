@@ -51,3 +51,66 @@ test('/draft takes the last of two drafts, and an unclosed fence is no draft', a
   await ($ as any).command.run({ command: 'draft', args: '' })
   expect(filled).toBe('closed')
 })
+
+test('/draft copy puts the draft on the clipboard', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let copied = ''
+  on('ui.copy', (_, e: any) => { copied = e.text; return { value: { isCopied: true } } as any })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi Sam\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: ' copy ' })
+  expect(copied).toBe('Hi Sam')
+  expect(r.text).toBe('Draft copied.')
+})
+
+test('/draft copy reports a refused copy', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('ui.copy', () => ({ deny: 'nope' }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(r.text).toBe('Could not copy (nope).')
+})
+
+test('/draft copy with no draft, and an unknown argument, leave clipboard and prompt alone', async ($, on) => {
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let touched = false
+  on('ui.copy', () => { touched = true; return { value: { isCopied: true } } as any })
+  on('prompt.fill', () => { touched = true; return { isFilled: true } as any })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  const a: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(a.text).toBe('No draft yet.')
+  const b: any = await ($ as any).command.run({ command: 'draft', args: 'cpy' })
+  expect(b.text).toBe('Use /draft or /draft copy.')
+  expect(touched).toBe(false)
+})
+
+test('/draft copy reports why the clipboard did not take it', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('ui.copy', () => ({ value: { isCopied: false, reason: 'no-clipboard' } }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(r.text).toBe('Could not copy (no-clipboard).')
+})
+
+test('/draft says why the fill failed, and a copy deny keeps a reason with colons', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('prompt.fill', () => ({ isFilled: false, text: '', cursor: 0 }) as any)
+  on('ui.copy', () => ({ deny: 'blocked: policy' }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const a: any = await ($ as any).command.run({ command: 'draft', args: '' })
+  expect(a.text).toBe('Could not fill the prompt box (refused).') // a hook's refusal carries no cause
+  const b: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(b.text).toBe('Could not copy (blocked: policy).')
+})

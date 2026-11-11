@@ -28,6 +28,8 @@ The message shows up in an orange draft box. Then type:
 
 The full text is now in your prompt box. Change what you want, then copy it out, or press Enter to send it back to Claude (for example with "make it more polite" added on top).
 
+To copy the draft without editing it, type `/draft copy`. In Warp, click "Allow clipboard writes" the first time.
+
 If there's no draft yet, `/draft` says `No draft yet.`
 
 ## Requirements

@@ -16,6 +16,9 @@ function splitDraft(text: string) {
   return null
 }
 
+// A denied or failed engine call rejects as "<plugin>: $.<call>: <reason>"; keep just the reason.
+const why = (err: unknown) => (err instanceof Error ? err.message : String(err)).replace(/^[^:]*: \$\.[\w.]+: /, '') || 'refused'
+
 const RULE = `# Drafts
 When you write text the user will send or post somewhere else (an email, message, reply, post, cover letter, bio), put that text alone inside a fenced block whose language is \`draft\`:
 
@@ -33,16 +36,31 @@ export const register: Register = on => {
   })
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit' })
+    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit', argumentHint: '[copy]' })
     return next(e)
   })
 
   // The prompt box is the one place that always takes clicks and keys.
-  on('command.run', { command: 'draft' }, async $ => {
+  on('command.run', { command: 'draft' }, async ($, e) => {
+    const arg = e.args.trim().toLowerCase()
+    if (arg && arg !== 'copy') return { text: 'Use /draft or /draft copy.' }
     const draft = await read($, latest)
     if (draft === null) return { text: 'No draft yet.' }
-    const r = await $.prompt.fill({ text: draft })
-    return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
+    if (arg === 'copy') {
+      try {
+        const c = await $.ui.copy({ text: draft })
+        // shortcut: an OSC 52 write can't report back, so isCopied may be true when the terminal dropped it
+        return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
+      } catch (err) {
+        return { text: `Could not copy (${why(err)}).` }
+      }
+    }
+    try {
+      const r = await $.prompt.fill({ text: draft })
+      return { text: r.isFilled ? 'Draft is in your prompt box.' : `Could not fill the prompt box (${r.refusal ?? 'refused'}).` }
+    } catch (err) {
+      return { text: `Could not fill the prompt box (${why(err)}).` }
+    }
   })
 
   // Save the newest draft when a reply finishes (render hooks can't write state).
@@ -61,7 +79,7 @@ export const register: Register = on => {
       <Box flexDirection="column">
         {parts.before.trim() ? <Markdown text={parts.before} /> : null}
         <Box borderStyle="round" paddingX={1} flexDirection="column">
-          <Text dimColor>✎ draft · type /draft to edit it</Text>
+          <Text dimColor>✎ draft · /draft to edit · /draft copy to copy</Text>
           <Text>{parts.draft}</Text>
         </Box>
         {parts.after.trim() ? <Markdown text={parts.after} /> : null}
