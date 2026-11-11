@@ -64,3 +64,14 @@ test('/draft copy puts the draft on the clipboard', async ($, on) => {
   expect(copied).toBe('Hi Sam')
   expect(r.text).toBe('Draft copied.')
 })
+
+test('/draft copy reports a refused copy', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('ui.copy', () => ({ deny: 'nope' }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(r.text).toBe('Could not copy (refused).')
+})

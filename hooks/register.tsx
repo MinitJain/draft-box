@@ -42,8 +42,12 @@ export const register: Register = on => {
     const draft = await read($, latest)
     if (draft === null) return { text: 'No draft yet.' }
     if (e.args.trim() === 'copy') {
-      const c = await $.ui.copy({ text: draft })
-      return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
+      try {
+        const c = await $.ui.copy({ text: draft })
+        return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
+      } catch {
+        return { text: 'Could not copy (refused).' } // another plugin denied ui.copy
+      }
     }
     const r = await $.prompt.fill({ text: draft })
     return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
