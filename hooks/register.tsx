@@ -33,14 +33,18 @@ export const register: Register = on => {
   })
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit' })
+    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit (/draft copy copies it)' })
     return next(e)
   })
 
   // The prompt box is the one place that always takes clicks and keys.
-  on('command.run', { command: 'draft' }, async $ => {
+  on('command.run', { command: 'draft' }, async ($, e) => {
     const draft = await read($, latest)
     if (draft === null) return { text: 'No draft yet.' }
+    if (e.args.trim() === 'copy') {
+      const c = await $.ui.copy({ text: draft })
+      return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
+    }
     const r = await $.prompt.fill({ text: draft })
     return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
   })
@@ -61,7 +65,7 @@ export const register: Register = on => {
       <Box flexDirection="column">
         {parts.before.trim() ? <Markdown text={parts.before} /> : null}
         <Box borderStyle="round" paddingX={1} flexDirection="column">
-          <Text dimColor>✎ draft · type /draft to edit it</Text>
+          <Text dimColor>✎ draft · /draft to edit · /draft copy to copy</Text>
           <Text>{parts.draft}</Text>
         </Box>
         {parts.after.trim() ? <Markdown text={parts.after} /> : null}

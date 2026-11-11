@@ -51,3 +51,16 @@ test('/draft takes the last of two drafts, and an unclosed fence is no draft', a
   await ($ as any).command.run({ command: 'draft', args: '' })
   expect(filled).toBe('closed')
 })
+
+test('/draft copy puts the draft on the clipboard', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  let copied = ''
+  on('ui.copy', (_, e: any) => { copied = e.text; return { value: { isCopied: true } } as any })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi Sam\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: ' copy ' })
+  expect(copied).toBe('Hi Sam')
+  expect(r.text).toBe('Draft copied.')
+})
