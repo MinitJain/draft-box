@@ -73,7 +73,7 @@ test('/draft copy reports a refused copy', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
   await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
   const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
-  expect(r.text).toBe('Could not copy (refused).')
+  expect(r.text).toMatch(/^Could not copy \(.+\)\.$/)
 })
 
 test('/draft copy with no draft, and an unknown argument, leave clipboard and prompt alone', async ($, on) => {
@@ -88,4 +88,15 @@ test('/draft copy with no draft, and an unknown argument, leave clipboard and pr
   const b: any = await ($ as any).command.run({ command: 'draft', args: 'cpy' })
   expect(b.text).toBe('Use /draft or /draft copy.')
   expect(touched).toBe(false)
+})
+
+test('/draft copy reports why the clipboard did not take it', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('ui.copy', () => ({ value: { isCopied: false, reason: 'no-clipboard' } }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(r.text).toBe('Could not copy (no-clipboard).')
 })

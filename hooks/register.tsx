@@ -39,16 +39,17 @@ export const register: Register = on => {
 
   // The prompt box is the one place that always takes clicks and keys.
   on('command.run', { command: 'draft' }, async ($, e) => {
-    const draft = await read($, latest)
     const arg = e.args.trim().toLowerCase()
     if (arg && arg !== 'copy') return { text: 'Use /draft or /draft copy.' }
+    const draft = await read($, latest)
     if (draft === null) return { text: 'No draft yet.' }
     if (arg === 'copy') {
       try {
         const c = await $.ui.copy({ text: draft })
         return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
-      } catch {
-        return { text: 'Could not copy (refused).' } // another plugin denied ui.copy
+      } catch (err) {
+        // another plugin denied ui.copy, or the engine failed: say why
+        return { text: `Could not copy (${err instanceof Error ? err.message : 'refused'}).` }
       }
     }
     const r = await $.prompt.fill({ text: draft })
