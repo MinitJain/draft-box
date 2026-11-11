@@ -73,7 +73,7 @@ test('/draft copy reports a refused copy', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
   await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
   const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
-  expect(r.text).toMatch(/^Could not copy \(.+\)\.$/)
+  expect(r.text).toBe('Could not copy (nope).')
 })
 
 test('/draft copy with no draft, and an unknown argument, leave clipboard and prompt alone', async ($, on) => {

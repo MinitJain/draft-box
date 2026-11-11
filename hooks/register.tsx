@@ -16,6 +16,9 @@ function splitDraft(text: string) {
   return null
 }
 
+// A denied or failed engine call rejects as "<plugin>: $.<call>: <reason>"; keep just the reason.
+const why = (err: unknown) => (err instanceof Error ? err.message.split(': ').pop() : '') || 'refused'
+
 const RULE = `# Drafts
 When you write text the user will send or post somewhere else (an email, message, reply, post, cover letter, bio), put that text alone inside a fenced block whose language is \`draft\`:
 
@@ -33,7 +36,7 @@ export const register: Register = on => {
   })
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit (/draft copy copies it)' })
+    await $.command.register({ name: 'draft', description: 'Put the latest draft in the prompt box to edit', argumentHint: '[copy]' })
     return next(e)
   })
 
@@ -48,12 +51,15 @@ export const register: Register = on => {
         const c = await $.ui.copy({ text: draft })
         return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
       } catch (err) {
-        // another plugin denied ui.copy, or the engine failed: say why
-        return { text: `Could not copy (${err instanceof Error ? err.message : 'refused'}).` }
+        return { text: `Could not copy (${why(err)}).` }
       }
     }
-    const r = await $.prompt.fill({ text: draft })
-    return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
+    try {
+      const r = await $.prompt.fill({ text: draft })
+      return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
+    } catch (err) {
+      return { text: `Could not fill the prompt box (${why(err)}).` }
+    }
   })
 
   // Save the newest draft when a reply finishes (render hooks can't write state).
