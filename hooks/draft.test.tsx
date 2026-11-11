@@ -100,3 +100,17 @@ test('/draft copy reports why the clipboard did not take it', async ($, on) => {
   const r: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
   expect(r.text).toBe('Could not copy (no-clipboard).')
 })
+
+test('/draft says why the fill failed, and a copy deny keeps a reason with colons', async ($, on) => {
+  on('classic.Stop', () => ({}))
+  on('command.register', () => ({ value: { command: 'draft' } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('prompt.fill', () => ({ isFilled: false, text: '', cursor: 0 }) as any)
+  on('ui.copy', () => ({ deny: 'blocked: policy' }) as any)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true } as any)
+  await $.classic.Stop({ last_assistant_message: '```draft\nHi\n```' } as any)
+  const a: any = await ($ as any).command.run({ command: 'draft', args: '' })
+  expect(a.text).toBe('Could not fill the prompt box (refused).') // a hook's refusal carries no cause
+  const b: any = await ($ as any).command.run({ command: 'draft', args: 'copy' })
+  expect(b.text).toBe('Could not copy (blocked: policy).')
+})

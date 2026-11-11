@@ -17,7 +17,7 @@ function splitDraft(text: string) {
 }
 
 // A denied or failed engine call rejects as "<plugin>: $.<call>: <reason>"; keep just the reason.
-const why = (err: unknown) => (err instanceof Error ? err.message.split(': ').pop() : '') || 'refused'
+const why = (err: unknown) => (err instanceof Error ? err.message : String(err)).replace(/^[^:]*: \$\.[\w.]+: /, '') || 'refused'
 
 const RULE = `# Drafts
 When you write text the user will send or post somewhere else (an email, message, reply, post, cover letter, bio), put that text alone inside a fenced block whose language is \`draft\`:
@@ -49,6 +49,7 @@ export const register: Register = on => {
     if (arg === 'copy') {
       try {
         const c = await $.ui.copy({ text: draft })
+        // shortcut: an OSC 52 write can't report back, so isCopied may be true when the terminal dropped it
         return { text: c.isCopied ? 'Draft copied.' : `Could not copy (${c.reason}).` }
       } catch (err) {
         return { text: `Could not copy (${why(err)}).` }
@@ -56,7 +57,7 @@ export const register: Register = on => {
     }
     try {
       const r = await $.prompt.fill({ text: draft })
-      return { text: r.isFilled ? 'Draft is in your prompt box.' : 'Could not fill the prompt box.' }
+      return { text: r.isFilled ? 'Draft is in your prompt box.' : `Could not fill the prompt box (${r.refusal ?? 'refused'}).` }
     } catch (err) {
       return { text: `Could not fill the prompt box (${why(err)}).` }
     }
